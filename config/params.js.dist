@@ -1,0 +1,9 @@
+export const params = {
+  server: "",
+  clientId: "",
+  secret: "",
+  username: "",
+  password: "",
+  token: "",
+  refreshToken: "",
+}

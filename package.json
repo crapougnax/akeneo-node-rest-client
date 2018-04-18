@@ -1,0 +1,27 @@
+{
+  "name": "pim2cat",
+  "version": "1.0.0",
+  "description": "Outil de synchro Akeneo -> Woocommerce",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "run": "clear ; node src/boot.js"
+  },
+  "author": "Olivier Lépine <olivier@lepine.fr>",
+  "license": "ISC",
+  "dependencies": {
+    "babel-core": "^6.26.0",
+    "babel-polyfill": "^6.26.0",
+    "btoa": "^1.2.1",
+    "node-rest-client": "^3.1.0"
+  },
+  "babel": {
+    "presets": [
+      "env"
+    ]
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.1"
+  }
+}
