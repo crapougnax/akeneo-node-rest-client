@@ -10,10 +10,9 @@
   "author": "Olivier Lépine <olivier@lepine.fr>",
   "license": "ISC",
   "dependencies": {
-    "babel-core": "^6.26.0",
-    "babel-polyfill": "^6.26.0",
     "btoa": "^1.2.1",
-    "node-rest-client": "^3.1.0"
+    "node-fetch": "^2.1.2",
+    "query-string": "^6.0.0"
   },
   "babel": {
     "presets": [
@@ -21,6 +20,8 @@
     ]
   },
   "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-polyfill": "^6.26.0",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.1"
   }
