@@ -6,12 +6,15 @@ const client = new AkeneoClient(params)
 
 client.authenticate().then(() => {
   const cursor = client.cursor('products')
-  cursor.fetch().then(() => {
-
-    console.log(cursor.getItems())
+  cursor.get().then(() => {
+    //console.log(cursor.getItems(), cursor.page)
 
     cursor.next().then(items => {
-      console.log(items)
+      //console.log(cursor.getItems(), cursor.page)
+
+      cursor.prev().then(() => {
+        console.log( cursor.getItems(), cursor.page)
+      })
     })
   })
 })

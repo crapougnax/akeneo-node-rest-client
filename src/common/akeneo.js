@@ -96,7 +96,7 @@ export class AkeneoClient {
 
 export class AkeneoCursor {
 
-  constructor(client, endpoint, limit = 10) {
+  constructor(client, endpoint, limit = 1) {
     this.client = client
     this.endpoint = endpoint
     this.limit = limit
@@ -107,64 +107,105 @@ export class AkeneoCursor {
     this.items
   }
 
-  async fetch(params) {
-    const json = await this.client.get(
-      this.endpoint, {
-        limit: this.limit,
-        with_count: true
-      }
-    )
-
-    if (json._links) {
-    }
-
-    this.page = json.current_page
-    this.max = json.items_count
-
-    return json
+  async get(params) {
+    return await this.fetch(1)
   }
 
   async next() {
+    return await this.fetch(this.page + 1)
+  }
 
-    if (this.page + 1 > this.max / this.limit) {
+  async prev() {
+    return await this.fetch(this.page - 1)
+  }
+
+  async fetch(page) {
+
+    if (! this.pageExists(page)) {
       return false
     }
 
     const json = await this.client.get(
       this.endpoint, {
-        page: this.page+1,
         limit: this.limit,
+        page: page,
+        with_count: (page == 1),
       }
     )
 
-    return json
-  }
-
-  async get(page) {
-    const json = await this.client.get(
-      this.endpoint, {
-        limit: this.limit,
-        with_count: true
-      }
-    )
-
-    this.populate(json.items)
-
-    if (json._links) {
-    }
+    this.populateCollection(json._embedded.items)
 
     if (page == 1) {
       this.max = json.items_count
     }
 
-    return json
+    return this.getItems()
   }
 
-  populate(items) {
-    this.items = items
+  populateCollection(items) {
+    this.items = []
+    for (let item of items) {
+      this.items[item.identifier] = this.populateItem(item)
+    }
+
+    return this.items
+  }
+
+  populateItem(item) {
+    const obj = {}
+    for (let arr of Object.entries(item)) {
+
+      console.log(arr)
+
+      switch (arr[0]) {
+
+        case 'associations':
+          AkeneoParser.parseAssociations(obj, arr[1])
+          break
+
+        case 'values':
+          AkeneoParser.parseValues(obj, arr[1])
+          break
+
+        default:
+          if (arr[0].substring(0,1) != '_') {
+            obj[arr[0]] = arr[1]
+          }
+          break
+      }
+    }
+
+    return obj
   }
 
   getItems() {
     return this.items
+  }
+
+  pageExists(page) {
+    return (page > this.max / this.limit)
+  }
+}
+
+export class AkeneoParser {
+
+  static parseAssociations(obj, associations) {
+    obj.associations = {}
+    for (let association of Object.entries(associations)) {
+      obj.associations[association[0]] = association[1]
+    }
+  }
+
+  static parseValues(obj, values) {
+    for (let value of Object.entries(values)) {
+      if (value[1].length > 1) {
+        obj[value[0]] = {}
+        for (let version of value[1]) {
+          obj[value[0]][version.locale] = version.data
+        }
+      } else {
+        obj[value[0]] = value[1][0].data
+      }
+    }
   }
 }

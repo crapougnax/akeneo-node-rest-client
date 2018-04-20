@@ -1,0 +1,215 @@
+{
+  "_links": {
+      "self": {
+          "href": "http://pim.a6a.geria-gestion.fr:8080/api/rest/v1/products/SAA002A"
+      }
+  },
+  "identifier": "SAA002A",
+  "family": "seats",
+  "parent": null,
+  "groups": [],
+  "categories": [
+      "SAA",
+      "SIE"
+  ],
+  "enabled": true,
+  "values": {
+      "depth": [
+          {
+              "locale": null,
+              "scope": null,
+              "data": {
+                  "amount": "16.0000",
+                  "unit": "CENTIMETER"
+              }
+          }
+      ],
+      "label": [
+          {
+              "locale": "es_ES",
+              "scope": null,
+              "data": "Repose tête \"Monza\" ES"
+          },
+          {
+              "locale": "fr_FR",
+              "scope": null,
+              "data": "Repose tête \"Monza\""
+          }
+      ],
+      "usage": [
+          {
+              "locale": null,
+              "scope": null,
+              "data": [
+                  "general"
+              ]
+          }
+      ],
+      "width": [
+          {
+              "locale": null,
+              "scope": null,
+              "data": {
+                  "amount": "48.0000",
+                  "unit": "CENTIMETER"
+              }
+          }
+      ],
+      "zones": [
+          {
+              "locale": "fr_FR",
+              "scope": null,
+              "data": [
+                  "ED"
+              ]
+          }
+      ],
+      "ecotax": [
+          {
+              "locale": null,
+              "scope": null,
+              "data": "00"
+          }
+      ],
+      "height": [
+          {
+              "locale": null,
+              "scope": null,
+              "data": {
+                  "amount": "26.0000",
+                  "unit": "CENTIMETER"
+              }
+          }
+      ],
+      "oldsku": [
+          {
+              "locale": null,
+              "scope": null,
+              "data": "40402"
+          }
+      ],
+      "volume": [
+          {
+              "locale": null,
+              "scope": null,
+              "data": {
+                  "amount": "0.1000",
+                  "unit": "CUBIC_METER"
+              }
+          }
+      ],
+      "picture": [
+          {
+              "locale": null,
+              "scope": null,
+              "data": "f/7/8/c/f78c77fb720207452ea1eefa44f46440fb386a76_201303061652019801.jpg",
+              "_links": {
+                  "download": {
+                      "href": "http://pim.a6a.geria-gestion.fr:8080/api/rest/v1/media-files/f/7/8/c/f78c77fb720207452ea1eefa44f46440fb386a76_201303061652019801.jpg/download"
+                  }
+              }
+          }
+      ],
+      "collection": [
+          {
+              "locale": null,
+              "scope": null,
+              "data": "43"
+          }
+      ],
+      "visibility": [
+          {
+              "locale": null,
+              "scope": null,
+              "data": [
+                  "catalog",
+                  "quote",
+                  "restocking"
+              ]
+          }
+      ],
+      "description": [
+          {
+              "locale": "fr_FR",
+              "scope": null,
+              "data": "Repose tête rembourré amovible pour fauteuil \"Monza\". Forme ergonomique avec oreilles de maintien pour la tête.\n"
+          }
+      ],
+      "fabric_full": [
+          {
+              "locale": null,
+              "scope": null,
+              "data": {
+                  "amount": "0.7000",
+                  "unit": "METER"
+              }
+          }
+      ],
+      "fabric_headpiece": [
+          {
+              "locale": null,
+              "scope": null,
+              "data": {
+                  "amount": "0.7000",
+                  "unit": "METER"
+              }
+          }
+      ]
+  },
+  "created": "2018-01-24T17:22:48+01:00",
+  "updated": "2018-04-20T14:35:14+02:00",
+  "associations": {
+      "PACK": {
+          "groups": [],
+          "products": [],
+          "product_models": []
+      },
+      "PROVIDED_BY": {
+          "groups": [],
+          "products": [
+              "SAA002ADOM"
+          ],
+          "product_models": []
+      },
+      "SUBSTITUTION": {
+          "groups": [],
+          "products": [],
+          "product_models": []
+      },
+      "UPSELL": {
+          "groups": [],
+          "products": [],
+          "product_models": []
+      },
+      "X_SELL": {
+          "groups": [],
+          "products": [],
+          "product_models": []
+      },
+      "has_finishing": {
+          "groups": [],
+          "products": [],
+          "product_models": []
+      },
+      "mandatory_addon_1": {
+          "groups": [],
+          "products": [],
+          "product_models": []
+      },
+      "mandatory_addon_2": {
+          "groups": [],
+          "products": [],
+          "product_models": []
+      },
+      "optional_addon_1": {
+          "groups": [],
+          "products": [],
+          "product_models": []
+      },
+      "optional_addon_2": {
+          "groups": [],
+          "products": [],
+          "product_models": []
+      }
+  }
+}
