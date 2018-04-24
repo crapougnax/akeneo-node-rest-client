@@ -1,19 +1,20 @@
 import fetch from 'node-fetch'
 import btoa from 'btoa'
 import { stringify } from 'query-string'
+
 export class AkeneoClient {
   constructor(params) {
     this.params = params
-
-    this.endpoints = ['products', 'product', 'categories']
-    this.token
-    this.refreshToken
+    this.endpoints = ['products', 'categories']
+    this.token = null
+    this.refreshToken = null
     this.expiresAt = 0
+    this.defaultLocale = 'fr_FR'
   }
 
   async connect() {
     if (this.expiresAt > Date.now()) {
-      const auth = await this.authenticate()
+      await this.authenticate()
     }
   }
 
@@ -48,14 +49,16 @@ export class AkeneoClient {
       this.refreshToken = json.refresh_token
       this.expiresAt = Date.now() + json.expires_in * 1000
 
-      console.log('OAuth authentication successful')
+      console.debug('OAuth authentication successful')
     } else {
-      console.log('OAuth authentication failed')
+      console.debug('OAuth authentication failed')
     }
   }
 
   async get(endpoint, params) {
-    if (!this.endpoints.includes(endpoint)) {
+    if (
+      !this.endpoints.includes(endpoint.substring(0, endpoint.indexOf('/')))
+    ) {
       throw new Error(`Unknown endpoint "${endpoint}"`)
     }
 
@@ -96,6 +99,44 @@ export class AkeneoClient {
 
     return new AkeneoCursor(this, endpoint, limit)
   }
+
+  entity(endpoint, id) {
+    return new AkeneoEntity(this, endpoint, id)
+  }
+
+  product(id) {
+    return this.entity('products', id)
+  }
+}
+
+/**
+ * Represents an entity
+ */
+export class AkeneoEntity {
+  constructor(client, endpoint, id) {
+    this.client = client
+    this.endpoint = endpoint
+    this.id = id
+    this.data = []
+  }
+
+  async fetch() {
+    const json = await this.client.get(`${this.endpoint}/${this.id}`)
+    this.data = AkeneoParser.populateItem(json)
+    return this.data
+  }
+
+  attribute(key, locale = this.client.defaultLocale) {
+    if (this.data[key]) {
+      if (typeof this.data[key] === 'object') {
+        return this.data[key][locale]
+      } else {
+        return this.data[key]
+      }
+    } else {
+      throw new Error(`Attribute '${key} doesn't exist`)
+    }
+  }
 }
 
 export class AkeneoCursor {
@@ -107,19 +148,19 @@ export class AkeneoCursor {
     this.page = 0
     this.max = -1
 
-    this.items
+    this.items = []
   }
 
   async get(params) {
-    return await this.fetch(1)
+    return this.fetch(1)
   }
 
   async next() {
-    return await this.fetch(this.page + 1)
+    return this.fetch(this.page + 1)
   }
 
   async prev() {
-    return await this.fetch(this.page - 1)
+    return this.fetch(this.page - 1)
   }
 
   async fetch(page) {
@@ -127,7 +168,7 @@ export class AkeneoCursor {
       return false
     }
 
-    const withCount = (page == 1)
+    const withCount = page === 1
 
     const json = await this.client.get(this.endpoint, {
       limit: this.limit,
@@ -135,7 +176,7 @@ export class AkeneoCursor {
       with_count: withCount,
     })
 
-    this.populateCollection(json._embedded.items)
+    AkeneoParser.populateCollection(json._embedded.items)
 
     if (page == 1) {
       this.max = json.items_count
@@ -144,7 +185,17 @@ export class AkeneoCursor {
     return this.getItems()
   }
 
-  populateCollection(items) {
+  getItems() {
+    return this.items
+  }
+
+  pageExists(page) {
+    return page > this.max / this.limit
+  }
+}
+
+export class AkeneoParser {
+  static populateCollection(items) {
     this.items = []
     for (let item of items) {
       this.items[item.identifier] = this.populateItem(item)
@@ -153,10 +204,10 @@ export class AkeneoCursor {
     return this.items
   }
 
-  populateItem(item) {
+  static populateItem(item) {
     const obj = {}
     for (let arr of Object.entries(item)) {
-      console.log(arr)
+      // console.log(arr)
 
       switch (arr[0]) {
         case 'associations':
@@ -178,16 +229,6 @@ export class AkeneoCursor {
     return obj
   }
 
-  getItems() {
-    return this.items
-  }
-
-  pageExists(page) {
-    return page > this.max / this.limit
-  }
-}
-
-export class AkeneoParser {
   static parseAssociations(obj, associations, removeEmpties = false) {
     obj.associations = {}
     for (let association of Object.entries(associations)) {
@@ -195,14 +236,11 @@ export class AkeneoParser {
         obj.associations[association[0]] = association[1]
       } else {
         obj.associations[association[0]] = {}
-        for (let types of association[1]) {
-          console.log(type)
+        for (let type of association[1]) {
+          //console.log(type)
           if (type.length == 0) {
             continue
           }
-
-          //obj.associations[association[0]] = type
-
         }
       }
     }
