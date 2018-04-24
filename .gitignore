@@ -63,5 +63,6 @@ typings/
 
 # project specifics
 config/params.js
+.vscode
 
 # End of https://www.gitignore.io/api/node
