@@ -1,6 +1,7 @@
 import fetch from 'node-fetch'
 import btoa from 'btoa'
 import { stringify } from 'query-string'
+import AWS from 'aws-sdk'
 
 export class AkeneoClient {
   constructor(params) {
@@ -73,7 +74,7 @@ export class AkeneoClient {
       }
     )
       .then((res) => {
-        if (res.status == 200) {
+        if (res.status === 200) {
           return res.json()
         } else {
           console.error(
@@ -128,14 +129,39 @@ export class AkeneoEntity {
 
   attribute(key, locale = this.client.defaultLocale) {
     if (this.data[key]) {
-      if (typeof this.data[key] === 'object') {
+      if (typeof this.data[key] === 'object' && this.data[key][locale]) {
         return this.data[key][locale]
       } else {
         return this.data[key]
       }
     } else {
-      throw new Error(`Attribute '${key} doesn't exist`)
+      throw new Error(`Attribute '${key}' doesn't exist`)
     }
+  }
+
+  async blob(key) {
+    const s3 = new AWS.S3({
+      apiVersion: '2006-03-01',
+      accessKeyId: 'AKIAJL4OZB3NMTZWNXNA',
+      secretAccessKey: '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',
+      region: 'eu-central-1',
+    })
+
+    await s3.getObject(
+      {
+        Bucket: 'a6a',
+        Key: `catalog/${this.data[key]}`,
+      },
+      function(err, data) {
+        if (err) {
+          throw new Error(
+            `Attribute '${key}' value doesn't match a blob object`
+          )
+        } else {
+          return data.Body.toString('binary')
+        }
+      }
+    )
   }
 }
 
@@ -178,7 +204,7 @@ export class AkeneoCursor {
 
     AkeneoParser.populateCollection(json._embedded.items)
 
-    if (page == 1) {
+    if (page === 1) {
       this.max = json.items_count
     }
 
@@ -219,7 +245,7 @@ export class AkeneoParser {
           break
 
         default:
-          if (arr[0].substring(0, 1) != '_') {
+          if (arr[0].substring(0, 1) !== '_') {
             obj[arr[0]] = arr[1]
           }
           break
@@ -237,8 +263,7 @@ export class AkeneoParser {
       } else {
         obj.associations[association[0]] = {}
         for (let type of association[1]) {
-          //console.log(type)
-          if (type.length == 0) {
+          if (type.length === 0) {
             continue
           }
         }

@@ -13,6 +13,7 @@
   "dependencies": {
     "btoa": "^1.2.1",
     "node-fetch": "^2.1.2",
+    "aws-sdk": "^2.259.1",
     "query-string": "^6.0.0"
   },
   "babel": {
