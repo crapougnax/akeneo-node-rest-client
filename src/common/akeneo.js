@@ -3,7 +3,14 @@ import btoa from 'btoa'
 import { stringify } from 'query-string'
 import AWS from 'aws-sdk'
 
+/**
+ * Akeneo API Client
+ */
 export class AkeneoClient {
+  /**
+   *
+   * @param {object} params
+   */
   constructor(params) {
     this.params = params
     this.endpoints = ['products', 'categories']
@@ -13,12 +20,18 @@ export class AkeneoClient {
     this.defaultLocale = 'fr_FR'
   }
 
+  /**
+   * Connect to API if necessary
+   */
   async connect() {
     if (this.expiresAt > Date.now()) {
       await this.authenticate()
     }
   }
 
+  /**
+   * Authenticate to PIM API
+   */
   async authenticate() {
     const json = await fetch(`${this.params.server}/api/oauth/v1/token`, {
       method: 'POST',
@@ -49,13 +62,19 @@ export class AkeneoClient {
       this.token = json.access_token
       this.refreshToken = json.refresh_token
       this.expiresAt = Date.now() + json.expires_in * 1000
-
       console.debug('OAuth authentication successful')
+      return true
     } else {
       console.debug('OAuth authentication failed')
+      return false
     }
   }
 
+  /**
+   * Execute GET query on API
+   * @param {string} endpoint
+   * @param {object} params
+   */
   async get(endpoint, params) {
     if (
       !this.endpoints.includes(endpoint.substring(0, endpoint.indexOf('/')))
@@ -93,6 +112,36 @@ export class AkeneoClient {
     return json
   }
 
+  /**
+   * Return the binary content of a file attribute
+   * @param {string} path
+   * @param {function} callback
+   */
+  async blob(path, callback) {
+    switch (this.params.storage) {
+      case 's3':
+        // @todo persist connection ?
+        const s3 = new AWS.S3(this.params.s3.credentials)
+        await s3.getObject(
+          {
+            Bucket: this.params.s3.bucket,
+            Key: `${this.params.s3.prefix}${path}`,
+          },
+          callback
+        )
+        break
+
+      default:
+        // @todo implement default storage
+        break
+    }
+  }
+
+  /**
+   * Return a cursor to a collection of records
+   * @param {string} endpoint
+   * @param {object} limit
+   */
   cursor(endpoint, limit) {
     if (!this.endpoints.includes(endpoint)) {
       throw new Error(`Unknown endpoint "${endpoint}"`)
@@ -101,10 +150,19 @@ export class AkeneoClient {
     return new AkeneoCursor(this, endpoint, limit)
   }
 
+  /**
+   * Return an AkeneoEntity() instance matching the provided endpoint id
+   * @param {string} endpoint
+   * @param {string} id
+   */
   entity(endpoint, id) {
     return new AkeneoEntity(this, endpoint, id)
   }
 
+  /**
+   * Return an AkeneoEntity() instance for a product matching the provided id
+   * @param {string} id
+   */
   product(id) {
     return this.entity('products', id)
   }
@@ -114,19 +172,39 @@ export class AkeneoClient {
  * Represents an entity
  */
 export class AkeneoEntity {
+  /**
+   * Class constructor
+   * @param {AkeneoClient} client
+   * @param {string} endpoint
+   * @param {string} id
+   */
   constructor(client, endpoint, id) {
     this.client = client
     this.endpoint = endpoint
     this.id = id
     this.data = []
+    this.subs = {
+      products: {},
+      groups: {},
+    }
   }
 
+  /**
+   * Retrieve the entity data from the API
+   * @returns {object}
+   */
   async fetch() {
     const json = await this.client.get(`${this.endpoint}/${this.id}`)
     this.data = AkeneoParser.populateItem(json)
     return this.data
   }
 
+  /**
+   * Retrieve the value of the attribute matching the provided key
+   * with respect of provided  or default locale
+   * @param {string} key
+   * @param {string} locale
+   */
   attribute(key, locale = this.client.defaultLocale) {
     if (this.data[key]) {
       if (typeof this.data[key] === 'object' && this.data[key][locale]) {
@@ -139,30 +217,44 @@ export class AkeneoEntity {
     }
   }
 
+  /**
+   * Retrieve the binary content of the file attribute
+   * matching the provided key
+   * @param {string} key
+   */
   async blob(key) {
-    const s3 = new AWS.S3({
-      apiVersion: '2006-03-01',
-      accessKeyId: 'AKIAJL4OZB3NMTZWNXNA',
-      secretAccessKey: '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',
-      region: 'eu-central-1',
-    })
-
-    await s3.getObject(
-      {
-        Bucket: 'a6a',
-        Key: `catalog/${this.data[key]}`,
-      },
-      function(err, data) {
-        if (err) {
-          throw new Error(
-            `Attribute '${key}' value doesn't match a blob object`
-          )
-        } else {
-          return data.Body.toString('binary')
-        }
+    if (!this.data[key] || this.data[key].length === 0) {
+      throw new Error(`Attribute '${key}' doesn't exist or has an empty value`)
+    }
+    await this.client.blob(this.data[key], (err, data) => {
+      if (err) {
+        throw new Error(`Attribute '${key}' value doesn't match a blob object`)
       }
-    )
+      return data.Body.toString('binary')
+    })
   }
+
+  /**
+   * Return a collection of associated products
+   * or groups matching the provided key
+   * @param {string} key
+   * @param {string} type
+   */
+  async associations(key, type = 'products') {
+    if (!this.subs[type][key]) {
+      const associations = this.attribute('associations')
+      this.subs[type][key] = []
+
+      for (let sku of associations[key][type]) {
+        const product = this.client.product(sku)
+        this.subs[type][key].push(product)
+        await product.fetch()
+      }
+    }
+
+    return this.subs[type][key]
+  }
+  // AkeneoEntity class end
 }
 
 export class AkeneoCursor {
